@@ -1,20 +1,25 @@
 language: php
 
 php:
-  - 5.2
   - 5.3
   - 5.4
   - 5.5
   - 5.6
   - 7.0
   - 7.1
-  - hhvm
   - nightly
+
+matrix:
+  include:
+    - php: hhvm
+      dist: trusty
 
 before_install:
   - phpenv config-rm xdebug.ini || return 0
 
 install:
+  # We explicitly want to test both twig 1 (PHP 5) and twig 2 (PHP 7)
+  - rm composer.lock || return 0
   # php-cs-fixer is nice to have but HHVM and nightly
   # don't support it, so make sure to remove it for CI
   - composer remove --dev friendsofphp/php-cs-fixer
