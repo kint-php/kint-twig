@@ -14,10 +14,7 @@ class Kint_TwigExtension extends Twig_Extension
             'is_variadic' => true,
         );
 
-        $reflect = new ReflectionClass('Twig_Extension');
-
-        // Check for twig 1 or twig 2
-        if ($reflect->isAbstract()) {
+        if (version_compare(Twig_Environment::VERSION, '2') < 0) {
             return array(
                 new Twig_SimpleFunction('d', array($this, 'd'), $opts),
                 new Twig_SimpleFunction('s', array($this, 's'), $opts),
