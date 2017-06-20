@@ -2,31 +2,6 @@
 
 class Kint_TwigExtension extends Twig_Extension
 {
-    public function getName()
-    {
-        return 'kint';
-    }
-
-    public function getFunctions()
-    {
-        $opts = array(
-            'is_safe' => array('html'),
-            'is_variadic' => true,
-        );
-
-        if (version_compare(Twig_Environment::VERSION, '2') < 0) {
-            return array(
-                new Twig_SimpleFunction('d', array($this, 'd'), $opts),
-                new Twig_SimpleFunction('s', array($this, 's'), $opts),
-            );
-        } else {
-            return array(
-                new Twig_Function('d', array($this, 'd'), $opts),
-                new Twig_Function('s', array($this, 's'), $opts),
-            );
-        }
-    }
-
     /**
      * Dumper function sets return and mode.
      *
@@ -59,6 +34,31 @@ class Kint_TwigExtension extends Twig_Extension
         Kint::settings($stash);
 
         return $out;
+    }
+
+    public function getName()
+    {
+        return 'kint';
+    }
+
+    public function getFunctions()
+    {
+        $opts = array(
+            'is_safe' => array('html'),
+            'is_variadic' => true,
+        );
+
+        if (version_compare(Twig_Environment::VERSION, '2') < 0) {
+            return array(
+                new Twig_SimpleFunction('d', array($this, 'd'), $opts),
+                new Twig_SimpleFunction('s', array($this, 's'), $opts),
+            );
+        } else {
+            return array(
+                new Twig_Function('d', array($this, 'd'), $opts),
+                new Twig_Function('s', array($this, 's'), $opts),
+            );
+        }
     }
 
     public function d(array $args = array())
