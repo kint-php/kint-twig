@@ -34,7 +34,7 @@ class Kint_TwigExtension extends Twig_Extension
     protected function dump($mode, array $args = array())
     {
         if (!Kint::$enabled_mode) {
-            return 0;
+            return;
         }
 
         $stash = Kint::settings();

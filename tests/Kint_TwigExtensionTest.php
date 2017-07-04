@@ -2,37 +2,49 @@
 
 class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
 {
+    protected $kint_status;
+
+    public function setUp()
+    {
+        $this->kint_status = Kint::settings();
+    }
+
+    public function tearDown()
+    {
+        Kint::settings($this->kint_status);
+    }
+
     public function outputProvider()
     {
         return array(
             'basic test d' => array(
-                '/magical_hullaballoo/',
                 '{{ d("magical" ~ "_" ~ "hullaballoo") }}',
+                '/magical_hullaballoo/',
                 true,
             ),
             'basic test s' => array(
-                '/magical_hullaballoo/',
                 '{{ s("magical" ~ "_" ~ "hullaballoo") }}',
+                '/magical_hullaballoo/',
                 true,
             ),
             'echoless test d' => array(
-                '/magical_hullaballoo/',
                 '{% set x = d("magical" ~ "_" ~ "hullaballoo") %}',
+                '/magical_hullaballoo/',
                 false,
             ),
             'echoless test s' => array(
-                '/magical_hullaballoo/',
                 '{% set x = s("magical" ~ "_" ~ "hullaballoo") %}',
+                '/magical_hullaballoo/',
                 false,
             ),
             'array test d' => array(
-                '/array.+?1.+?0.+?string.+?asdf.+?array.+?magic.+?string.+?hullaballoo/',
                 '{{ d(["asdf"], {"magic": "hullaballoo"}) }}',
+                '/array.+?1.+?0.+?string.+?asdf.+?array.+?magic.+?string.+?hullaballoo/',
                 true,
             ),
             'array test s' => array(
-                '/literal.+?array.+?1.+?0.+?string.+?asdf.+?literal.+?array.+?magic.+?string.+?hullaballoo/s',
                 '{{ s(["asdf"], {"magic": "hullaballoo"}) }}',
+                '/literal.+?array.+?1.+?0.+?string.+?asdf.+?literal.+?array.+?magic.+?string.+?hullaballoo/s',
                 true,
             ),
         );
@@ -41,7 +53,7 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider outputProvider
      */
-    public function testOutput($regex, $template, $matches)
+    public function testOutput($template, $regex, $matches)
     {
         $loader = new Twig_Loader_Array(array('template' => $template));
         $twig = new Twig_Environment($loader);
@@ -53,5 +65,20 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
         } else {
             $this->assertNotRegexp($regex, $twig->render('template'));
         }
+    }
+
+    /**
+     * @dataProvider outputProvider
+     */
+    public function testDisabled($template)
+    {
+        $loader = new Twig_Loader_Array(array('template' => $template));
+        $twig = new Twig_Environment($loader);
+
+        $twig->addExtension(new Kint_TwigExtension());
+
+        Kint::$enabled_mode = false;
+
+        $this->assertEquals('', $twig->render('template'));
     }
 }
