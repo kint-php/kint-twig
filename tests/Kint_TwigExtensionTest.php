@@ -121,4 +121,23 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
             $this->assertNotRegexp($regex, $twig->render('template'));
         }
     }
+
+    public function testDumpAll()
+    {
+        $loader = new Twig_Loader_Array(array('template' => '{{ d() }}'));
+        $twig = new Twig_Environment($loader);
+
+        $twig->addExtension(new Kint_TwigExtension());
+
+        $this->assertRegexp(
+            '/var1.+val1.+foo.+bar/',
+            $twig->render(
+                'template',
+                array(
+                    'var1' => 'val1',
+                    'foo' => 'bar',
+                )
+            )
+        );
+    }
 }

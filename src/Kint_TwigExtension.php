@@ -35,7 +35,7 @@ class Kint_TwigExtension extends Twig_Extension
      *
      * @return string Kint output
      */
-    public function dump($mode, array $args = array())
+    public function dump($mode, array $context, array $args = array())
     {
         if (!Kint::$enabled_mode) {
             return;
@@ -47,7 +47,7 @@ class Kint_TwigExtension extends Twig_Extension
         Kint::$return = true;
         Kint::$display_called_from = false;
 
-        $out = call_user_func_array(array('Kint', 'dump'), $args);
+        $out = call_user_func_array(array('Kint', 'dump'), $args ?: array($context));
 
         Kint::settings($stash);
 
@@ -81,6 +81,7 @@ class Kint_TwigExtension extends Twig_Extension
         $opts = array(
             'is_safe' => array('html'),
             'is_variadic' => true,
+            'needs_context' => true,
         );
 
         $ret = array();
@@ -92,8 +93,8 @@ class Kint_TwigExtension extends Twig_Extension
             foreach ($this->functions as $func => $mode) {
                 $ret[] = new $class(
                     $func,
-                    function (array $args = array()) use ($mode, $object) {
-                        return $object->dump($mode, $args);
+                    function (array $context, array $args = array()) use ($mode, $object) {
+                        return $object->dump($mode, $context, $args);
                     },
                     $opts
                 );
