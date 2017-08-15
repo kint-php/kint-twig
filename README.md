@@ -15,3 +15,18 @@ $twig->addExtension(new Kint_TwigExtension());
 
 {{ s(data, plainMode) }}
 ```
+
+Custom function names:
+
+```php
+$ext = new Kint_TwigExtension();
+$ext->setFunctions([
+    // Function name => Render mode
+    'dump' => Kint::MODE_RICH,
+]);
+$twig->addExtension($ext);
+```
+
+```twig
+{{ dump() }}
+```

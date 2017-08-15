@@ -81,4 +81,44 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
 
         $this->assertEquals('', $twig->render('template'));
     }
+
+    public function customFunctionProvider()
+    {
+        return array(
+            'basic test custom function' => array(
+                '{{ dump("magical" ~ "_" ~ "hullaballoo") }}',
+                '/magical_hullaballoo/',
+                true,
+                array('dump' => Kint::MODE_RICH),
+            ),
+            'multiple test custom function' => array(
+                '{{ debug("magical" ~ "_" ~ "hullaballoo") }}',
+                '/magical_hullaballoo/',
+                true,
+                array(
+                    'dump' => Kint::MODE_RICH,
+                    'debug' => Kint::MODE_RICH,
+                ),
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider customFunctionProvider
+     */
+    public function testSetFunctions($template, $regex, $matches, $funcs)
+    {
+        $loader = new Twig_Loader_Array(array('template' => $template));
+        $twig = new Twig_Environment($loader);
+
+        $ext = new Kint_TwigExtension();
+        $ext->setFunctions($funcs);
+        $twig->addExtension($ext);
+
+        if ($matches) {
+            $this->assertRegexp($regex, $twig->render('template'));
+        } else {
+            $this->assertNotRegexp($regex, $twig->render('template'));
+        }
+    }
 }

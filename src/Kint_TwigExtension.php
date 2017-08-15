@@ -13,9 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 class Kint_TwigExtension extends Twig_Extension
 {
+    protected $functions = array(
+        'd' => Kint::MODE_RICH,
+        's' => Kint::MODE_PLAIN,
+    );
+
     /**
      * Dumper function sets return and mode.
      *
@@ -31,7 +35,7 @@ class Kint_TwigExtension extends Twig_Extension
      *
      * @return string Kint output
      */
-    protected function dump($mode, array $args = array())
+    public function dump($mode, array $args = array())
     {
         if (!Kint::$enabled_mode) {
             return;
@@ -50,6 +54,17 @@ class Kint_TwigExtension extends Twig_Extension
         return $out;
     }
 
+    /**
+     * Sets an array of function aliases to be returned by getFunctions.
+     *
+     * Note that this has no effect once getFunctions has been
+     * called once, and is only supported in PHP 5.3 and above
+     */
+    public function setFunctions(array $functions)
+    {
+        $this->functions = $functions;
+    }
+
     public function getName()
     {
         return 'kint';
@@ -57,31 +72,47 @@ class Kint_TwigExtension extends Twig_Extension
 
     public function getFunctions()
     {
+        if (version_compare(Twig_Environment::VERSION, '2') < 0) {
+            $class = 'Twig_SimpleFunction';
+        } else {
+            $class = 'Twig_Function';
+        }
+
         $opts = array(
             'is_safe' => array('html'),
             'is_variadic' => true,
         );
 
-        if (version_compare(Twig_Environment::VERSION, '2') < 0) {
-            return array(
-                new Twig_SimpleFunction('d', array($this, 'd'), $opts),
-                new Twig_SimpleFunction('s', array($this, 's'), $opts),
-            );
+        $ret = array();
+
+        if (KINT_PHP53) {
+            // Workaround for 5.3 not supporting $this in closures yet
+            $object = $this;
+
+            foreach ($this->functions as $func => $mode) {
+                $ret[] = new $class(
+                    $func,
+                    function (array $args = array()) use ($mode, $object) {
+                        return $object->dump($mode, $args);
+                    },
+                    $opts
+                );
+            }
         } else {
-            return array(
-                new Twig_Function('d', array($this, 'd'), $opts),
-                new Twig_Function('s', array($this, 's'), $opts),
-            );
+            $ret[] = new $class('d', array($this, 'd'), $opts);
+            $ret[] = new $class('s', array($this, 's'), $opts);
         }
+
+        return $ret;
     }
 
     public function d(array $args = array())
     {
-        return self::dump(Kint::MODE_RICH, $args);
+        return $this->dump(Kint::MODE_RICH, $args);
     }
 
     public function s(array $args = array())
     {
-        return self::dump(Kint::MODE_PLAIN, $args);
+        return $this->dump(Kint::MODE_PLAIN, $args);
     }
 }
