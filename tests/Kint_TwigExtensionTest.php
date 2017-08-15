@@ -56,7 +56,7 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
     public function testOutput($template, $regex, $matches)
     {
         $loader = new Twig_Loader_Array(array('template' => $template));
-        $twig = new Twig_Environment($loader);
+        $twig = new Twig_Environment($loader, array('debug' => true));
 
         $twig->addExtension(new Kint_TwigExtension());
 
@@ -70,12 +70,22 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider outputProvider
      */
-    public function testDisabled($template)
+    public function testDisabled($template, $regex, $matches)
     {
         $loader = new Twig_Loader_Array(array('template' => $template));
         $twig = new Twig_Environment($loader);
 
         $twig->addExtension(new Kint_TwigExtension());
+
+        $this->assertEquals('', $twig->render('template'));
+
+        $twig->enableDebug();
+
+        if ($matches) {
+            $this->assertRegexp($regex, $twig->render('template'));
+        } else {
+            $this->assertNotRegexp($regex, $twig->render('template'));
+        }
 
         Kint::$enabled_mode = false;
 
@@ -109,7 +119,7 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
     public function testSetFunctions($template, $regex, $matches, $funcs)
     {
         $loader = new Twig_Loader_Array(array('template' => $template));
-        $twig = new Twig_Environment($loader);
+        $twig = new Twig_Environment($loader, array('debug' => true));
 
         $ext = new Kint_TwigExtension();
         $ext->setFunctions($funcs);
@@ -125,7 +135,7 @@ class Kint_TwigExtension_Test extends PHPUnit_Framework_TestCase
     public function testDumpAll()
     {
         $loader = new Twig_Loader_Array(array('template' => '{{ d() }}'));
-        $twig = new Twig_Environment($loader);
+        $twig = new Twig_Environment($loader, array('debug' => true));
 
         $twig->addExtension(new Kint_TwigExtension());
 
