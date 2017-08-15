@@ -47,7 +47,7 @@ class Kint_TwigExtension extends Twig_Extension
         Kint::$return = true;
         Kint::$display_called_from = false;
 
-        $out = call_user_func_array(array('Kint', 'dump'), $args ?: array($context));
+        $out = call_user_func_array(array('Kint', 'dump'), $args ? $args : array($context));
 
         Kint::settings($stash);
 
