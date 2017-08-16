@@ -46,6 +46,8 @@ class Kint_TwigExtension extends Twig_Extension
         Kint::$enabled_mode = $mode;
         Kint::$return = true;
         Kint::$display_called_from = false;
+        $apstash = Kint_Renderer_Rich::$access_paths;
+        Kint_Renderer_Rich::$access_paths = false;
 
         if ($args) {
             $out = call_user_func_array(array('Kint', 'dump'), $args);
@@ -54,6 +56,7 @@ class Kint_TwigExtension extends Twig_Extension
         }
 
         Kint::settings($stash);
+        Kint_Renderer_Rich::$access_paths = $apstash;
 
         return $out;
     }
