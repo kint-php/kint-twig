@@ -47,7 +47,7 @@ class Kint_TwigExtension extends Twig_Extension
         Kint::$return = true;
         Kint::$display_called_from = false;
 
-        $out = call_user_func_array(array('Kint', 'dump'), $args ? $args : array($context));
+        $out = call_user_func_array(array('Kint', 'dump'), $args ?: array($context));
 
         Kint::settings($stash);
 
@@ -87,34 +87,19 @@ class Kint_TwigExtension extends Twig_Extension
 
         $ret = array();
 
-        if (KINT_PHP53) {
-            // Workaround for 5.3 not supporting $this in closures yet
-            $object = $this;
+        // Workaround for 5.3 not supporting $this in closures yet
+        $object = $this;
 
-            foreach ($this->functions as $func => $mode) {
-                $ret[] = new $class(
-                    $func,
-                    function (Twig_Environment $env, array $context, array $args = array()) use ($mode, $object) {
-                        return $object->dump($mode, $env, $context, $args);
-                    },
-                    $opts
-                );
-            }
-        } else {
-            $ret[] = new $class('d', array($this, 'd'), $opts);
-            $ret[] = new $class('s', array($this, 's'), $opts);
+        foreach ($this->functions as $func => $mode) {
+            $ret[] = new $class(
+                $func,
+                function (Twig_Environment $env, array $context, array $args = array()) use ($mode, $object) {
+                    return $object->dump($mode, $env, $context, $args);
+                },
+                $opts
+            );
         }
 
         return $ret;
-    }
-
-    public function d(array $args = array())
-    {
-        return $this->dump(Kint::MODE_RICH, $args);
-    }
-
-    public function s(array $args = array())
-    {
-        return $this->dump(Kint::MODE_PLAIN, $args);
     }
 }
