@@ -3,16 +3,19 @@
     "description": "Twig extension for Kint integration",
     "type": "library",
     "require": {
-        "kint-php/kint": "^2.0",
-        "twig/twig": "^1.19 || ^2.0",
-        "php": "^5.3 || ^7.0"
+        "kint-php/kint": "^3.0@dev",
+        "twig/twig": "^1.34 || ^2.4",
+        "php": ">= 5.3.9"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.0",
+        "vimeo/psalm": "^2.0",
         "phpunit/phpunit": "^4.0"
     },
     "autoload": {
-        "classmap": ["src/"]
+        "psr-4": {
+            "Kint\\Twig\\": "src/"
+        }
     },
     "license": "GPL-3.0",
     "authors": [
@@ -22,6 +25,10 @@
         }
     ],
     "scripts": {
-        "format": "php-cs-fixer fix"
+        "format": [
+            "@format:php"
+        ],
+        "format:php": "php-cs-fixer fix",
+        "analyze": "psalm --show-info=false"
     }
 }

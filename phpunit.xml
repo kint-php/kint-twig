@@ -1,0 +1,10 @@
+<phpunit>
+  <filter>
+    <whitelist processUncoveredFilesFromWhitelist="true">
+      <directory suffix=".php">src</directory>
+    </whitelist>
+  </filter>
+  <logging>
+    <log type="coverage-html" target="/tmp/coverage" />
+  </logging>
+</phpunit>
