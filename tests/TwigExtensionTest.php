@@ -60,7 +60,7 @@ class TwigExtensionTest extends TestCase
             ),
             'array test s' => array(
                 '{{ s(["asdf"], {"magic": "hullaballoo"}) }}',
-                '/literal.+?array.+?1.+?0.+?string.+?asdf.+?literal.+?array.+?magic.+?string.+?hullaballoo/s',
+                '/array.+?1.+?0.+?string.+?asdf.+?array.+?magic.+?string.+?hullaballoo/s',
                 true,
             ),
         );
