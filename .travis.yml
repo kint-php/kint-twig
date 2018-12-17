@@ -5,6 +5,7 @@ stage: tests
 php:
   - 7.2
   - nightly
+  - 7.3
   - 7.1
   - 7.0
   - 5.6
@@ -36,6 +37,7 @@ jobs:
         - composer remove twig/twig
         - composer require twig/twig:^1
       env: TWIG=1
+
     - php: 5.3
       dist: precise
       after_install:
@@ -46,7 +48,10 @@ jobs:
     # Check if `composer format` was run correctly
     - stage: analysis
       install: composer install
-      script: composer format && git status && git diff-files --quiet --exit-code
+      script:
+        - composer format
+        - git status
+        - git diff-files --quiet --exit-code
       env: analysis_type="composer format"
 
     # Check if code passes phpstan/psalm static analysis
