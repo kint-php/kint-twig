@@ -7,7 +7,7 @@ Note that features like the mini-trace, variable name detection, and modifiers w
 ## Usage
 
 ```php
-$twig->addExtension(new Kint_TwigExtension());
+$twig->addExtension(new Kint\Twig\TwigExtension());
 ```
 
 ```twig
@@ -19,10 +19,10 @@ $twig->addExtension(new Kint_TwigExtension());
 Custom function names:
 
 ```php
-$ext = new Kint_TwigExtension();
-$ext->setFunctions([
-    // Function name => Render mode
-    'dump' => Kint::MODE_RICH,
+$ext = new Kint\Twig\TwigExtension();
+$ext->setAliases([
+    // Function name => Renderer
+    'dump' => 'Kint\\Renderer\\RichRenderer',
 ]);
 $twig->addExtension($ext);
 ```
