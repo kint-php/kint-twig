@@ -4,7 +4,6 @@ stage: tests
 
 php:
   - 7.2
-  - nightly
   - 7.3
   - 7.1
   - 7.0
@@ -27,10 +26,18 @@ stages:
   - tests
 
 jobs:
+  allow_failures:
+    - php: nightly
+
   include:
     # 5.3 on precise
     - php: 5.3
       dist: precise
+
+    - php: nightly
+      install:
+        - composer remove --dev phpunit/phpunit friendsofphp/php-cs-fixer vimeo/psalm
+        - composer require --dev phpunit/phpunit ^6
 
     # Test twig 1
     - after_install:
