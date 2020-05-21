@@ -3,20 +3,18 @@ language: php
 stage: tests
 
 php:
-  - 7.2
+  - 7.4
+  - nightly
   - 7.3
-  - 7.1
-  - 7.0
-  - 5.6
-  - 5.5
-  - 5.4
+  - 7.2
 
 before_install:
   - phpenv config-rm xdebug.ini || return 0
 
 install:
   - rm composer.lock
-  - composer remove --dev friendsofphp/php-cs-fixer vimeo/psalm
+  - composer remove --dev friendsofphp/php-cs-fixer vimeo/psalm twig/twig kint-php/kint
+  - composer require twig/twig:$TWIG kint-php/kint:$KINT
 
 script:
   - php ./vendor/bin/phpunit -d error_reporting=-1 tests
@@ -25,32 +23,31 @@ stages:
   - analysis
   - tests
 
+env:
+  - TWIG=^2 KINT=^3
+  - TWIG=^3 KINT=^3
+  - TWIG=^3 KINT=dev-master
+
 jobs:
   allow_failures:
     - php: nightly
 
   include:
-    # 5.3 on precise
-    - php: 5.3
-      dist: precise
-
-    - php: nightly
+    - php: 7.0
       install:
-        - composer remove --dev phpunit/phpunit friendsofphp/php-cs-fixer vimeo/psalm
-        - composer require --dev phpunit/phpunit ^6
+        - composer remove --dev phpunit/phpunit friendsofphp/php-cs-fixer vimeo/psalm twig/twig kint-php/kint
+        - composer require twig/twig:2.4 kint-php/kint:^3
+        - composer update
+        - composer require --dev phpunit/phpunit ^5
+      env: TWIG=2.4 KINT=^3
 
-    # Test twig 1
-    - after_install:
-        - composer remove twig/twig
-        - composer require twig/twig:^1
-      env: TWIG=1
-
-    - php: 5.3
-      dist: precise
-      after_install:
-        - composer remove twig/twig
-        - composer require twig/twig:^1.34
-      env: TWIG=1
+    - php: 7.1
+      install:
+        - composer remove --dev phpunit/phpunit friendsofphp/php-cs-fixer vimeo/psalm twig/twig
+        - composer require twig/twig:^2
+        - composer update
+        - composer require --dev phpunit/phpunit ^5
+      env: TWIG=^2
 
     # Check if `composer format` was run correctly
     - stage: analysis
@@ -59,14 +56,15 @@ jobs:
         - composer format
         - git status
         - git diff-files --quiet --exit-code
-      env: analysis_type="composer format"
+      env: analysis_type="composer format" TWIG=^3
 
     # Check if code passes phpstan/psalm static analysis
     - stage: analysis
       install: composer install
       script: composer analyze
-      env: analysis_type="composer analyze"
+      env: analysis_type="composer analyze" TWIG=^3
 
     # Preliminary test run
     - stage: analysis
       install: composer install
+      env: TWIG=^3

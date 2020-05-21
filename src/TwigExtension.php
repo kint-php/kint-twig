@@ -28,16 +28,16 @@ use Twig\Extension\AbstractExtension;
 
 class TwigExtension extends AbstractExtension
 {
-    protected $aliases = array(
+    /** @var string[] */
+    protected $aliases = [
         'd' => 'Kint\\Renderer\\RichRenderer',
         's' => 'Kint\\Renderer\\PlainRenderer',
-    );
+    ];
 
     protected $frozen = false;
-    protected $parser;
-    protected $statics = array();
-    protected $instances = array();
-    protected $functions = array();
+    protected $statics = [];
+    protected $instances = [];
+    protected $functions = [];
 
     public function __construct()
     {
@@ -45,41 +45,14 @@ class TwigExtension extends AbstractExtension
             $this->aliases['j'] = 'Kint\\Renderer\\JsRenderer'; // @codeCoverageIgnore
         }
 
-        $this->parser = new Parser();
-
         $this->setStatics(Kint::getStatics());
     }
 
     /**
-     * Sets an array of function aliases to renderers.
+     * @param array $statics Array of statics expected by the Kint\Kint class
      *
-     * Note that this has no effect once getFunctions has been
-     * called once, and is only supported in PHP 5.3 and above
-     *
-     * @param array $functions
-     * @param array $aliases
+     * @return void
      */
-    public function setAliases(array $aliases)
-    {
-        if ($this->frozen) {
-            return;
-        }
-
-        foreach ($aliases as $alias) {
-            if (!\is_a($alias, 'Kint\\Renderer\\Renderer', true)) {
-                throw new InvalidArgumentException('Alias renderer is not a Kint\\Renderer\\Renderer');
-            }
-        }
-
-        $this->aliases = $aliases;
-        $this->instances = array();
-    }
-
-    public function getAliases()
-    {
-        return $this->aliases;
-    }
-
     public function setStatics(array $statics)
     {
         if ($this->frozen) {
@@ -88,17 +61,80 @@ class TwigExtension extends AbstractExtension
 
         $this->statics = $statics;
         $this->statics['return'] = true;
-        $this->parser->setDepthLimit($statics['max_depth']);
     }
 
-    public function getStatics()
+    public function getStatics(): array
     {
         return $this->statics;
     }
 
-    public function getParser()
+    /**
+     * Sets an array of function aliases to renderers.
+     *
+     * Note that this has no effect once getFunctions has been
+     * called once, and is only supported in PHP 5.3 and above
+     *
+     * @return void
+     */
+    public function setAliases(array $aliases)
     {
-        return $this->parser;
+        if ($this->frozen) {
+            return;
+        }
+
+        foreach ($aliases as $alias) {
+            if (!\is_string($alias)) {
+                throw new InvalidArgumentException('Alias renderer is not a string');
+            }
+            if (!\is_a($alias, 'Kint\\Renderer\\Renderer', true)) {
+                throw new InvalidArgumentException('Alias renderer string is not a Kint\\Renderer\\Renderer');
+            }
+        }
+
+        $this->aliases = $aliases;
+        $this->instances = [];
+    }
+
+    public function getAliases(): array
+    {
+        return $this->aliases;
+    }
+
+    public function getFunctions(): array
+    {
+        if ($this->functions) {
+            return $this->functions;
+        }
+
+        if (\version_compare(Environment::VERSION, '2') < 0) {
+            $class = 'Twig_SimpleFunction'; // @codeCoverageIgnore
+        } else {
+            $class = 'Twig\\TwigFunction';
+        }
+
+        $opts = [
+            'is_safe' => ['html'],
+            'is_variadic' => true,
+            'needs_context' => true,
+            'needs_environment' => true,
+        ];
+
+        $ret = [];
+
+        foreach ($this->aliases as $func => $renderer) {
+            $ret[] = new $class(
+                $func,
+                function (Environment $env, array $context, array $args = []) use ($func) {
+                    return $this->dump($func, $env, $context, $args);
+                },
+                $opts
+            );
+        }
+
+        $this->frozen = true;
+
+        /** @var \Twig\TwigFunction[] */
+        return $this->functions = $ret;
     }
 
     /**
@@ -111,32 +147,28 @@ class TwigExtension extends AbstractExtension
      * This means you can't use text or CLI mode through twig, but if you need
      * text or CLI mode you probably aren't using twig anyway.
      *
-     * @param mixed             $mode     Kint::$enabled_mode (One of array_keys(Kint::$renderers))
-     * @param array             $args     arguments to dump
-     * @param \Twig\Environment $env
-     * @param array             $context
-     * @param mixed             $renderer
+     * @param mixed $alias
      *
      * @return string Kint output
      */
-    public function dump($renderer, Environment $env, array $context, array $args = array())
+    public function dump($alias, Environment $env, array $context, array $args = []): string
     {
         if (!$env->isDebug()) {
             return '';
         }
 
-        $k = $this->getInstance($renderer);
+        $k = $this->getInstance($alias);
 
         if ($args) {
-            $bases = Kint::getBasesFromParamInfo(array(), \count($args));
+            $bases = Kint::getBasesFromParamInfo([], \count($args));
         } else {
-            $params = array();
+            $params = [];
             foreach ($context as $key => $arg) {
-                $params[] = array(
+                $params[] = [
                     'name' => $key,
                     'path' => null,
                     'expression' => false,
-                );
+                ];
                 $args[] = $arg;
             }
 
@@ -146,64 +178,18 @@ class TwigExtension extends AbstractExtension
         return $k->dumpAll($args, $bases);
     }
 
-    public function getName()
-    {
-        return 'kint';
-    }
-
-    public function getFunctions()
-    {
-        if ($this->functions) {
-            return $this->functions;
-        }
-
-        if (\version_compare(Environment::VERSION, '2') < 0) {
-            $class = 'Twig_SimpleFunction'; // @codeCoverageIgnore
-        } else {
-            $class = 'Twig\\TwigFunction';
-        }
-
-        $opts = array(
-            'is_safe' => array('html'),
-            'is_variadic' => true,
-            'needs_context' => true,
-            'needs_environment' => true,
-        );
-
-        $ret = array();
-
-        // Workaround for 5.3 not supporting $this in closures yet
-        $object = $this;
-
-        foreach ($this->aliases as $func => $renderer) {
-            $ret[] = new $class(
-                $func,
-                function (Environment $env, array $context, array $args = array()) use ($func, $object) {
-                    return $object->dump($func, $env, $context, $args);
-                },
-                $opts
-            );
-        }
-
-        $this->frozen = true;
-
-        return $this->functions = $ret;
-    }
-
     /**
      * Gets a Kint instance, from cache if possible.
      *
-     * @param string $func Function alias
-     *
-     * @return Kint
+     * @param string $alias Function alias
      */
-    protected function getInstance($func)
+    protected function getInstance(string $alias): Kint
     {
-        if (!isset($this->aliases[$func])) {
+        if (!isset($this->aliases[$alias])) {
             throw new InvalidArgumentException('Invalid function alias'); // @codeCoverageIgnore
         }
 
-        $renderer = $this->aliases[$func];
+        $renderer = $this->aliases[$alias];
 
         if (isset($this->instances[$renderer])) {
             return $this->instances[$renderer];
@@ -213,13 +199,13 @@ class TwigExtension extends AbstractExtension
             throw new InvalidArgumentException('Invalid renderer class'); // @codeCoverageIgnore
         }
 
-        /** @var \Kint\Renderer\Renderer */
         $instance = new $renderer();
 
-        $k = new Kint($this->parser, $instance);
+        $k = new Kint(new Parser(), $instance);
 
         $k->setStatesFromStatics($this->statics);
 
+        // Only cache after functions are frozen
         if ($this->frozen) {
             $this->instances[$renderer] = $k;
         }
