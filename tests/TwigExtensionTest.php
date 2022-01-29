@@ -21,13 +21,14 @@
 namespace Kint\Test\Twig;
 
 use Kint\Kint;
+use Kint\Parser\Parser;
 use Kint\Renderer\RichRenderer;
 use Kint\Twig\TwigExtension;
-use PHPUnit\Framework\TestCase;
 use Twig\Environment;
+use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
 
-class TwigExtensionTest extends TestCase
+class TwigExtensionTest extends KintTwigTestCase
 {
     public function outputProvider()
     {
@@ -69,9 +70,8 @@ class TwigExtensionTest extends TestCase
      * @dataProvider outputProvider
      *
      * @covers \Kint\Twig\TwigExtension::__construct
-     * @covers \Kint\Twig\TwigExtension::dump
      * @covers \Kint\Twig\TwigExtension::getFunctions
-     * @covers \Kint\Twig\TwigExtension::getInstance
+     * @covers \Kint\Twig\TwigExtension::dump
      *
      * @param mixed $template
      * @param mixed $regex
@@ -81,18 +81,15 @@ class TwigExtensionTest extends TestCase
     {
         $loader = new ArrayLoader(['template' => $template]);
         $twig = new Environment($loader, ['debug' => true]);
-
         $twig->addExtension(new TwigExtension());
 
         $output = $twig->render('template');
 
         if ($matches) {
-            $this->assertRegexp($regex, $output);
+            $this->assertMatchesRegularExpression($regex, $output);
         } else {
-            $this->assertNotRegexp($regex, $output);
+            $this->assertDoesNotMatchRegularExpression($regex, $output);
         }
-
-        $this->assertSame($output, $twig->render('template'));
     }
 
     /**
@@ -108,17 +105,18 @@ class TwigExtensionTest extends TestCase
     {
         $loader = new ArrayLoader(['template' => $template]);
         $twig = new Environment($loader);
-
         $twig->addExtension(new TwigExtension());
 
         $this->assertEquals('', $twig->render('template'));
 
         $twig->enableDebug();
 
+        $output = $twig->render('template');
+
         if ($matches) {
-            $this->assertRegexp($regex, $twig->render('template'));
+            $this->assertMatchesRegularExpression($regex, $output);
         } else {
-            $this->assertNotRegexp($regex, $twig->render('template'));
+            $this->assertDoesNotMatchRegularExpression($regex, $output);
         }
 
         $twig->disableDebug();
@@ -126,124 +124,25 @@ class TwigExtensionTest extends TestCase
         $this->assertEquals('', $twig->render('template'));
     }
 
-    public function customFunctionProvider()
+    public function testCustomConstruct()
     {
-        return [
-            'basic test custom function' => [
-                '{{ dump("magical" ~ "_" ~ "hullaballoo") }}',
-                '/magical_hullaballoo/',
-                true,
-                ['dump' => 'Kint\\Renderer\\RichRenderer'],
-            ],
-            'multiple test custom function' => [
-                '{{ debug("magical" ~ "_" ~ "hullaballoo") }}',
-                '/magical_hullaballoo/',
-                true,
-                [
-                    'dump' => 'Kint\\Renderer\\RichRenderer',
-                    'debug' => 'Kint\\Renderer\\RichRenderer',
-                ],
-            ],
-        ];
-    }
+        $kintstance = new Kint(new Parser(), new RichRenderer());
+        $kintstance->setStatesFromStatics(Kint::getStatics());
 
-    /**
-     * @dataProvider customFunctionProvider
-     * @covers \Kint\Twig\TwigExtension::dump
-     * @covers \Kint\Twig\TwigExtension::getAliases
-     * @covers \Kint\Twig\TwigExtension::setAliases
-     *
-     * @param mixed $template
-     * @param mixed $regex
-     * @param mixed $matches
-     * @param mixed $funcs
-     */
-    public function testAliases($template, $regex, $matches, $funcs)
-    {
-        $loader = new ArrayLoader(['template' => $template]);
+        $loader = new ArrayLoader([
+            'custom' => '{{ c("magical" ~ "_" ~ "hullaballoo") }}',
+            'fail' => '{{ d("magical" ~ "_" ~ "hullaballoo") }}',
+        ]);
         $twig = new Environment($loader, ['debug' => true]);
+        $twig->addExtension(new TwigExtension(['c' => $kintstance]));
 
-        $ext = new TwigExtension();
+        $output = $twig->render('custom');
 
-        $ext->setAliases([]);
-        $this->assertSame([], $ext->getAliases());
+        $this->assertMatchesRegularExpression('/magical_hullaballoo/', $output);
 
-        $ext->setAliases($funcs);
-        $this->assertSame($funcs, $ext->getAliases());
+        $this->expectException(SyntaxError::class);
 
-        $twig->addExtension($ext);
-
-        if ($matches) {
-            $this->assertRegexp($regex, $twig->render('template'));
-        } else {
-            $this->assertNotRegexp($regex, $twig->render('template'));
-        }
-
-        $ext->setAliases([]);
-        $this->assertSame($funcs, $ext->getAliases());
-    }
-
-    /**
-     * @covers \Kint\Twig\TwigExtension::setAliases
-     * @expectedException \InvalidArgumentException
-     */
-    public function testAliasNotString()
-    {
-        $ext = new TwigExtension();
-        $ext->setAliases([
-            'd' => new RichRenderer(),
-        ]);
-    }
-
-    /**
-     * @covers \Kint\Twig\TwigExtension::setAliases
-     * @expectedException \InvalidArgumentException
-     */
-    public function testAliasNotRenderer()
-    {
-        $ext = new TwigExtension();
-        $ext->setAliases([
-            'd' => 'stdClass',
-        ]);
-    }
-
-    /**
-     * @covers \Kint\Twig\TwigExtension::__construct
-     * @covers \Kint\Twig\TwigExtension::getStatics
-     * @covers \Kint\Twig\TwigExtension::setStatics
-     */
-    public function testStatics()
-    {
-        $statics = Kint::getStatics();
-        $statics['return'] = true;
-
-        $ext = new TwigExtension();
-        $this->assertSame($statics, $ext->getStatics());
-
-        $ext->setStatics(['max_depth' => null]);
-        $this->assertSame(['max_depth' => null, 'return' => true], $ext->getStatics());
-
-        $statics['id'] = $ext;
-
-        $ext->setStatics($statics);
-        $this->assertSame($statics, $ext->getStatics());
-
-        $ext->getFunctions();
-
-        $ext->setStatics([]);
-        $this->assertSame($statics, $ext->getStatics());
-    }
-
-    /**
-     * @covers \Kint\Twig\TwigExtension::getFunctions
-     */
-    public function testGetFunctionsCache()
-    {
-        $ext = new TwigExtension();
-
-        $funcs = $ext->getFunctions();
-
-        $this->assertSame($funcs, $ext->getFunctions());
+        $twig->render('fail');
     }
 
     /**
@@ -253,10 +152,9 @@ class TwigExtensionTest extends TestCase
     {
         $loader = new ArrayLoader(['template' => '{{ d() }}']);
         $twig = new Environment($loader, ['debug' => true]);
-
         $twig->addExtension(new TwigExtension());
 
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             '/var1.+val1.+foo.+bar/',
             $twig->render(
                 'template',
@@ -266,5 +164,33 @@ class TwigExtensionTest extends TestCase
                 ]
             )
         );
+    }
+
+    /**
+     * @covers \Kint\Twig\TwigExtension::setAliases
+     * @covers \Kint\Twig\TwigExtension::getAliases
+     */
+    public function testSetAliases()
+    {
+        $loader = new ArrayLoader(['template' => '{{ test() }}']);
+        $twig = new Environment($loader, ['debug' => true]);
+        $twig->addExtension($ext = new TwigExtension());
+
+        $this->assertNotEmpty($ext->getAliases());
+
+        $kintstance = new Kint(new Parser(), new RichRenderer());
+        $kintstance->setStatesFromStatics(Kint::getStatics());
+
+        $newAliases = ['test' => $kintstance];
+
+        $ext->setAliases($newAliases);
+
+        $this->assertSame($newAliases, $ext->getAliases());
+
+        $twig->render('template');
+
+        $ext->setAliases(['test number two' => $kintstance]);
+
+        $this->assertSame($newAliases, $ext->getAliases());
     }
 }
