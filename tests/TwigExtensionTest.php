@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Twig plugin for Kint
  * Copyright (C) 2017 Jonathan Vollebregt
@@ -28,7 +30,10 @@ use Twig\Environment;
 use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
 
-class TwigExtensionTest extends KintTwigTestCase
+/**
+ * @coversNothing
+ */
+class TwigExtensionTest extends TestCase
 {
     public function outputProvider()
     {
@@ -124,6 +129,9 @@ class TwigExtensionTest extends KintTwigTestCase
         $this->assertEquals('', $twig->render('template'));
     }
 
+    /**
+     * @covers \Kint\Twig\TwigExtension::__construct
+     */
     public function testCustomConstruct()
     {
         $kintstance = new Kint(new Parser(), new RichRenderer());

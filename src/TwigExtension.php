@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Twig plugin for Kint
  * Copyright (C) 2017 Jonathan Vollebregt
@@ -26,6 +28,8 @@ use Kint\Renderer\PlainRenderer;
 use Kint\Renderer\RichRenderer;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
+use Twig\TwigFunction;
+use Twig_SimpleFunction;
 
 class TwigExtension extends AbstractExtension
 {
@@ -59,7 +63,7 @@ class TwigExtension extends AbstractExtension
         return $this->aliases;
     }
 
-    public function setAliases(array $aliases)
+    public function setAliases(array $aliases): void
     {
         if ($this->frozen) {
             return;
@@ -74,9 +78,10 @@ class TwigExtension extends AbstractExtension
     public function getFunctions(): array
     {
         if (\version_compare(Environment::VERSION, '2') < 0) {
-            $class = 'Twig_SimpleFunction'; // @codeCoverageIgnore
+            /** @psalm-suppress UndefinedClass */
+            $class = Twig_SimpleFunction::class; // @codeCoverageIgnore
         } else {
-            $class = 'Twig\\TwigFunction';
+            $class = TwigFunction::class;
         }
 
         $opts = [

@@ -3,17 +3,18 @@
     "description": "Twig extension for Kint integration",
     "type": "library",
     "require": {
-        "kint-php/kint": "^4",
+        "php": ">=7.1",
+        "kint-php/kint": "^4 || ^5",
         "twig/twig": "^2.4 || ^3.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.0",
-        "vimeo/psalm": "^4",
+        "friendsofphp/php-cs-fixer": "^3",
+        "vimeo/psalm": "^5@dev",
         "phpunit/phpunit": "^9.0"
     },
     "config": {
         "platform": {
-            "php": "7.4"
+            "php": "8.1"
         }
     },
     "autoload": {

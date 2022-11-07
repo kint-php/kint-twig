@@ -70,11 +70,11 @@ jobs:
       fail-fast: false
       matrix:
         php-versions:
-          - 7.3
           - 7.4
           - 8.0
           - 8.1
           - 8.2
+          - 8.3
         twig:
           - 2
           - 3
@@ -95,7 +95,7 @@ jobs:
       - run: composer require twig/twig ^${{ matrix.twig }}
         if: steps.vendor-caches.outputs.cache-hit != 'true'
       - run: php ./vendor/bin/phpunit --no-coverage tests
-  old-phpunit-tests:
+  old-tests:
     name: 'PHP ${{ matrix.php-versions }} Twig ${{ matrix.twig }} tests'
     needs:
       - test-format
@@ -107,32 +107,10 @@ jobs:
       matrix:
         php-versions:
           - 7.2
+          - 7.3
         twig:
           - 2
           - 3
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-versions }}
-      - run: composer remove --dev phpunit/phpunit friendsofphp/php-cs-fixer vimeo/psalm
-      - run: composer require --dev phpunit/phpunit ^5
-      - run: composer require twig/twig ^${{ matrix.twig }}
-      - run: php ./vendor/bin/phpunit --no-coverage tests
-  old-tests:
-    name: 'PHP ${{ matrix.php-versions }} Twig 2 tests'
-    needs:
-      - test-format
-      - test-static
-      - test-basic
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php-versions:
-          - 7.0
-          - 7.1
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -144,13 +122,43 @@ jobs:
         with:
           path: |
             ./vendor
-          key: old-2-${{ hashFiles('./composer.lock') }}
-      - run: composer remove --dev phpunit/phpunit friendsofphp/php-cs-fixer vimeo/psalm
+          key: old-${{ matrix.twig }}-${{ hashFiles('./composer.lock') }}
+      - run: composer remove --dev friendsofphp/php-cs-fixer phpunit/phpunit phpspec/prophecy-phpunit vimeo/psalm
         if: steps.vendor-caches.outputs.cache-hit != 'true'
-      - run: composer config platform.php 7.0
+      - run: composer config platform.php 7.2.9
         if: steps.vendor-caches.outputs.cache-hit != 'true'
-      - run: composer require -W twig/twig ^2.12
+      - run: composer require twig/twig ^${{ matrix.twig }}
         if: steps.vendor-caches.outputs.cache-hit != 'true'
-      - run: composer require --dev phpunit/phpunit ^5
+      - run: composer require --dev phpunit/phpunit ^7
+        if: steps.vendor-caches.outputs.cache-hit != 'true'
+      - run: php ./vendor/bin/phpunit --no-coverage tests
+  older-tests:
+    name: 'PHP 7.1 Twig 2 tests'
+    needs:
+      - test-format
+      - test-static
+      - test-basic
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 7.1
+      - uses: actions/cache@v2
+        id: vendor-caches
+        with:
+          path: |
+            ./vendor
+          key: older-${{ hashFiles('./composer.lock') }}
+      - run: composer remove --dev friendsofphp/php-cs-fixer phpunit/phpunit phpspec/prophecy-phpunit vimeo/psalm
+        if: steps.vendor-caches.outputs.cache-hit != 'true'
+      - run: composer config platform.php 7.1.3
+        if: steps.vendor-caches.outputs.cache-hit != 'true'
+      - run: composer require twig/twig ^2
+        if: steps.vendor-caches.outputs.cache-hit != 'true'
+      - run: composer require --dev phpunit/phpunit ^7
         if: steps.vendor-caches.outputs.cache-hit != 'true'
       - run: php ./vendor/bin/phpunit --no-coverage tests

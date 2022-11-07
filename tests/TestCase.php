@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Twig plugin for Kint
  * Copyright (C) 2017 Jonathan Vollebregt
@@ -20,14 +22,20 @@
 
 namespace Kint\Test\Twig;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\TestCase as BaseTestCase;
 
-if (\method_exists(TestCase::class, 'assertMatchesRegularExpression')) {
-    class KintTwigTestCase extends TestCase
+if (\method_exists(BaseTestCase::class, 'assertMatchesRegularExpression')) {
+    /**
+     * @coversNothing
+     */
+    class TestCase extends BaseTestCase
     {
     }
 } else {
-    class KintTwigTestCase extends TestCase
+    /**
+     * @coversNothing
+     */
+    class TestCase extends BaseTestCase
     {
         public function assertMatchesRegularExpression(...$args)
         {
