@@ -77,12 +77,8 @@ class TwigExtensionTest extends TestCase
      * @covers \Kint\Twig\TwigExtension::__construct
      * @covers \Kint\Twig\TwigExtension::getFunctions
      * @covers \Kint\Twig\TwigExtension::dump
-     *
-     * @param mixed $template
-     * @param mixed $regex
-     * @param mixed $matches
      */
-    public function testOutput($template, $regex, $matches)
+    public function testOutput(string $template, string $regex, bool $matches)
     {
         $loader = new ArrayLoader(['template' => $template]);
         $twig = new Environment($loader, ['debug' => true]);
@@ -101,12 +97,8 @@ class TwigExtensionTest extends TestCase
      * @dataProvider outputProvider
      *
      * @covers \Kint\Twig\TwigExtension::dump
-     *
-     * @param mixed $template
-     * @param mixed $regex
-     * @param mixed $matches
      */
-    public function testDisabled($template, $regex, $matches)
+    public function testDisabled(string $template, string $regex, bool $matches)
     {
         $loader = new ArrayLoader(['template' => $template]);
         $twig = new Environment($loader);
