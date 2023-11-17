@@ -5,12 +5,12 @@ jobs:
     name: 'Code format check'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: vendor-caches
         with:
           path: |
@@ -27,12 +27,12 @@ jobs:
     name: 'Static analysis check'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: vendor-caches
         with:
           path: |
@@ -45,12 +45,12 @@ jobs:
     name: 'Basic test'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: vendor-caches
         with:
           path: |
@@ -82,12 +82,12 @@ jobs:
           - 2
           - 3
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: vendor-caches
         with:
           path: |
@@ -115,12 +115,12 @@ jobs:
           - 2
           - 3
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: vendor-caches
         with:
           path: |
@@ -145,12 +145,12 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 7.1
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: vendor-caches
         with:
           path: |
