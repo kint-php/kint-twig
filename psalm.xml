@@ -9,6 +9,6 @@
     </projectFiles>
 
     <issueHandlers>
-        <MissingPropertyType errorLevel="info" />
+        <Trace errorLevel="error"/>
     </issueHandlers>
 </psalm>

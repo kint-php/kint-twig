@@ -1,20 +1,23 @@
 {
     "name": "kint-php/kint-twig",
     "description": "Twig extension for Kint integration",
+    "keywords": ["dump", "debug", "twig"],
     "type": "library",
+    "homepage": "https://kint-php.github.io/kint/",
+    "license": "GPL-3.0",
     "require": {
-        "php": ">=7.1",
-        "kint-php/kint": "^4 || ^5",
-        "twig/twig": "^2.4 || ^3.0"
+        "php": ">=7.4",
+        "kint-php/kint": "^6",
+        "twig/twig": "^2.4 || ^3"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3",
         "vimeo/psalm": "^5",
-        "phpunit/phpunit": "^9.0"
+        "phpunit/phpunit": "^9"
     },
     "config": {
         "platform": {
-            "php": "8.2"
+            "php": "8.3"
         }
     },
     "autoload": {
@@ -27,7 +30,6 @@
             "Kint\\Test\\Twig\\": "tests/"
         }
     },
-    "license": "GPL-3.0",
     "authors": [
         {
             "name": "Jonathan Vollebregt",
@@ -35,10 +37,7 @@
         }
     ],
     "scripts": {
-        "format": [
-            "@format:php"
-        ],
-        "format:php": "php-cs-fixer fix",
-        "analyze": "psalm --show-info=false"
+        "format": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix",
+        "analyze": "psalm --no-cache"
     }
 }

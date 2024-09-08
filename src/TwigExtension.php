@@ -26,6 +26,7 @@ use Kint\Kint;
 use Kint\Parser\Parser;
 use Kint\Renderer\PlainRenderer;
 use Kint\Renderer\RichRenderer;
+use Kint\Value\Context\BaseContext;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -33,12 +34,13 @@ use Twig_SimpleFunction;
 
 class TwigExtension extends AbstractExtension
 {
-    protected $aliases;
-    protected $frozen = false;
+    /** @psalm-var Kint[] */
+    protected array $aliases;
+    protected bool $frozen = false;
 
-    public function __construct(array $aliases = null)
+    public function __construct(?array $aliases = null)
     {
-        if ($aliases) {
+        if (null !== $aliases) {
             $this->aliases = $aliases;
         } else {
             $statics = Kint::getStatics();
@@ -73,7 +75,10 @@ class TwigExtension extends AbstractExtension
     }
 
     /**
-     * @return \Twig\TwigFunction[]
+     * @psalm-suppress UndefinedDocblockClass
+     * @psalm-suppress ImplementedReturnTypeMismatch
+     *
+     * @psalm-return list<TwigFunction|Twig_SimpleFunction>
      */
     public function getFunctions(): array
     {
@@ -105,16 +110,11 @@ class TwigExtension extends AbstractExtension
 
         $this->frozen = true;
 
-        /** @var \Twig\TwigFunction[] */
         return $ret;
     }
 
     /**
      * Dumper function sets return and mode.
-     *
-     * @param mixed $alias
-     *
-     * @return string Kint output
      */
     protected function dump(string $alias, Environment $env, array $context, array $args = []): string
     {
@@ -122,22 +122,23 @@ class TwigExtension extends AbstractExtension
             return '';
         }
 
-        if ($args) {
-            $bases = Kint::getBasesFromParamInfo([], \count($args));
-        } else {
-            $params = [];
-            foreach ($context as $key => $arg) {
-                $params[] = [
-                    'name' => $key,
-                    'path' => null,
-                    'expression' => false,
-                ];
-                $args[] = $arg;
-            }
+        $bases = [];
+        $vars = [];
 
-            $bases = Kint::getBasesFromParamInfo($params, \count($context));
+        if ($args) {
+            $i = 0;
+            foreach ($args as $arg) {
+                $bases[$i] = new BaseContext('$'.$i);
+                $vars[$i] = $arg;
+                ++$i;
+            }
+        } else {
+            foreach ($context as $key => $arg) {
+                $bases[$key] = new BaseContext($key);
+                $vars[$key] = $arg;
+            }
         }
 
-        return $this->aliases[$alias]->dumpAll($args, $bases);
+        return $this->aliases[$alias]->dumpAll($vars, $bases);
     }
 }

@@ -26,6 +26,7 @@ use Kint\Kint;
 use Kint\Parser\Parser;
 use Kint\Renderer\RichRenderer;
 use Kint\Twig\TwigExtension;
+use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
