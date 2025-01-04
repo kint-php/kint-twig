@@ -30,7 +30,6 @@ use Kint\Value\Context\BaseContext;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
-use Twig_SimpleFunction;
 
 class TwigExtension extends AbstractExtension
 {
@@ -78,17 +77,10 @@ class TwigExtension extends AbstractExtension
      * @psalm-suppress UndefinedDocblockClass
      * @psalm-suppress ImplementedReturnTypeMismatch
      *
-     * @psalm-return list<TwigFunction|Twig_SimpleFunction>
+     * @psalm-return list<TwigFunction>
      */
     public function getFunctions(): array
     {
-        if (\version_compare(Environment::VERSION, '2') < 0) {
-            /** @psalm-suppress UndefinedClass */
-            $class = Twig_SimpleFunction::class; // @codeCoverageIgnore
-        } else {
-            $class = TwigFunction::class;
-        }
-
         $opts = [
             'is_safe' => ['html'],
             'is_variadic' => true,
@@ -99,7 +91,7 @@ class TwigExtension extends AbstractExtension
         $ret = [];
 
         foreach ($this->aliases as $alias => $renderer) {
-            $ret[] = new $class(
+            $ret[] = new TwigFunction(
                 $alias,
                 function (Environment $env, array $context, array $args = []) use ($alias) {
                     return $this->dump($alias, $env, $context, $args);
