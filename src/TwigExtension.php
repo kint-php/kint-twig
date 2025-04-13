@@ -31,6 +31,7 @@ use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
+/** @psalm-api */
 class TwigExtension extends AbstractExtension
 {
     /** @psalm-var Kint[] */
@@ -90,7 +91,7 @@ class TwigExtension extends AbstractExtension
 
         $ret = [];
 
-        foreach ($this->aliases as $alias => $renderer) {
+        foreach ($this->aliases as $alias => $_) {
             $ret[] = new TwigFunction(
                 $alias,
                 function (Environment $env, array $context, array $args = []) use ($alias) {
