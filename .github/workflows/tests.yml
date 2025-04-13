@@ -6,64 +6,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-      - uses: shivammathur/setup-php@v2
+      - uses: ./.github/actions/kint-twig-setup
+        name: Kint twig setup
         with:
           php-version: 8.4
-      - uses: actions/cache@v4
-        id: vendor-caches
-        with:
-          path: |
-            ./vendor
-          key: 3-${{ hashFiles('./composer.lock') }}
-      - run: composer install
-        if: steps.vendor-caches.outputs.cache-hit != 'true'
-      - run: composer format
+          twig-version: 3
+      - run: |
+          composer format
+          git status
+          git diff-files --quiet --exit-code
         env:
           PHP_CS_FIXER_IGNORE_ENV: 1
-      - run: git status
-      - run: git diff-files --quiet --exit-code
   test-static:
     name: 'Static analysis check'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-      - uses: shivammathur/setup-php@v2
+      - uses: ./.github/actions/kint-twig-setup
+        name: Kint twig setup
         with:
           php-version: 8.4
-      - uses: actions/cache@v4
-        id: vendor-caches
-        with:
-          path: |
-            ./vendor
-          key: 3-${{ hashFiles('./composer.lock') }}
-      - run: composer install
-        if: steps.vendor-caches.outputs.cache-hit != 'true'
+          twig-version: 3
       - run: composer analyze
   test-basic:
     name: 'Basic test'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-      - uses: shivammathur/setup-php@v2
+      - uses: ./.github/actions/kint-twig-setup
+        name: Kint twig setup
         with:
           php-version: 8.4
-      - uses: actions/cache@v4
-        id: vendor-caches
-        with:
-          path: |
-            ./vendor
-          key: 3-${{ hashFiles('./composer.lock') }}
-      - run: composer install
-        if: steps.vendor-caches.outputs.cache-hit != 'true'
+          twig-version: 3
       - run: php ./vendor/bin/phpunit tests
         env:
           MYSQLI_HOST: localhost:${{ job.services.mysql.ports['3306'] }}
@@ -74,6 +48,7 @@ jobs:
       - test-static
       - test-basic
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.php-versions == '8.5' }}
     strategy:
       fail-fast: false
       matrix:
@@ -84,34 +59,26 @@ jobs:
           - 8.2
           - 8.3
           - 8.4
+          - 8.5
         twig:
           - 2
           - 3
         exclude:
-          # Twig 2 is EOL and breaks in 8.4
-          - php-versions: 8.4
-            twig: 2
           # Twig 3 doesn't support < 8.1
           - php-versions: 7.4
             twig: 3
           - php-versions: 8.0
             twig: 3
+          # Twig 2 is EOL and breaks in 8.4+
+          - php-versions: 8.4
+            twig: 2
+          - php-versions: 8.5
+            twig: 2
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-      - uses: shivammathur/setup-php@v2
+      - uses: ./.github/actions/kint-twig-setup
+        name: Kint twig setup
         with:
           php-version: ${{ matrix.php-versions }}
-      - uses: actions/cache@v4
-        id: vendor-caches
-        with:
-          path: |
-            ./vendor
-          key: ${{ matrix.twig }}-${{ hashFiles('./composer.lock') }}
-      - run: composer install
-        if: steps.vendor-caches.outputs.cache-hit != 'true'
-      - run: composer require twig/twig ^${{ matrix.twig }}
-        if: steps.vendor-caches.outputs.cache-hit != 'true'
+          twig-version: ${{ matrix.twig }}
       - run: php ./vendor/bin/phpunit --no-coverage tests

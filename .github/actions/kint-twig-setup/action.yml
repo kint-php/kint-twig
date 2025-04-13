@@ -1,0 +1,32 @@
+name: Kint twig setup
+inputs:
+  php-version:
+    required: true
+  twig-version:
+    required: false
+    default: 3
+runs:
+  using: composite
+  steps:
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version }}
+    - run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      shell: bash
+      id: composer-cache
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-${{ inputs.php-version < 8.1 }}-${{ inputs.twig-version }}-${{ hashFiles('./composer.lock') }}
+    - run: composer require --no-interaction --no-install twig/twig ^${{ inputs.twig-version }}
+      shell: bash
+      if: ${{ inputs.twig-version != 3 }}
+    # On old versions we only run tests so strip everything else out
+    - run: |
+        composer remove --dev --no-install $(grep -Fvx -f <(composer show --no-interaction --locked --name-only --direct --no-dev) <(composer show --no-interaction --locked --name-only --direct))
+        composer config platform.php 7.4
+        composer require --dev --no-install phpunit/phpunit ^9
+      shell: bash
+      if: inputs.php-version < 8.1
+    - run: composer install
+      shell: bash
